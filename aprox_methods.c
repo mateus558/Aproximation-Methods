@@ -14,7 +14,7 @@ double f(double x){
 }
 
 double df(double x){
-	return 3*(x-2)*(x-2);
+	return cos(x);
 }
 
 double itr_f(double x){
