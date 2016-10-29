@@ -263,7 +263,7 @@ int main(){
 			printf("h = ");
 			scanf("%lf", &b);
 	
-			x = quasinewton_method(a, b, relative_error, rel_error);
+			x = quasinewton_method(a, b, absolute_error, rel_error);
 			break;
 		default:
 			printf("Invalid method!");
