@@ -6,12 +6,7 @@
 double** read_matrix(char *fname, double** matrix1, int *N){
 	int i, j, e, size;
 	double **matrix = NULL, val;
-	char *pos;
 	FILE *file = NULL;
-	
-	fgets(fname, sizeof(fname), stdin);
-	if((pos=strchr(fname, '\n')) != NULL)
-    	*pos = '\0';
 	
 	file = fopen(fname, "r");
 	if(!file){
@@ -41,8 +36,12 @@ double** read_matrix(char *fname, double** matrix1, int *N){
 
 int main(){
 	int N, i, j, e;
-	char fname[50];
+	char fname[50], *pos;
 	double** matrix = NULL;
+
+	fgets(fname, sizeof(fname), stdin);
+	if((pos=strchr(fname, '\n')) != NULL)
+    	*pos = '\0';
 
 	matrix = read_matrix(fname, matrix, &N);
 	
