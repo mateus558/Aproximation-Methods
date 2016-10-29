@@ -26,7 +26,7 @@ double** read_matrix(char *fname, double** matrix1, int *N){
 	
 	i = j = 0;
 	while(!feof(file)){
-		if(i >= size || j >= size) return matrix;
+		if(i >= size || j >= size) break;
 		if(fscanf(file, "%lf", &val) != 1) return NULL;
 		
 		matrix[i][j] = val;
@@ -49,13 +49,6 @@ int main(){
 	if(!matrix){
 		printf("The matrix couldn't be read!\n");
 		exit(1);
-	}
-	
-	for(i = 0; i < N; ++i){
-		for(j = 0; j < N; ++j){
-			printf("%lf ", matrix[i][j]);
-		}
-		printf("\n");
 	}
 	
 	return 0;
