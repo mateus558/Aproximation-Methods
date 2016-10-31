@@ -3,9 +3,9 @@
 #include <string.h>
 #include <math.h>
 
-double** read_matrix(char *fname, double** matrix1, int *N){
+double** read_matrix(char *fname, double** matrix, int *N){
 	int i, j, e, size;
-	double **matrix = NULL, val;
+	double val;
 	FILE *file = NULL;
 	
 	file = fopen(fname, "r");
@@ -48,6 +48,13 @@ int main(){
 	if(!matrix){
 		printf("The matrix couldn't be read!\n");
 		exit(1);
+	}
+	
+	for(i = 0; i < N; ++i){
+		for(j = 0; j < N; ++j){
+			printf("%lf ", matrix[i][j]);
+		}	
+		printf("\n");
 	}
 	
 	return 0;
