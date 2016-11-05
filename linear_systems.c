@@ -3,35 +3,31 @@
 #include <string.h>
 #include <math.h>
 
-double** read_matrix(char *fname, double** matrix, int *N){
-	int i, j, e, size;
+int read_matrix(char *fname, double*** matrix, int *N){
+	int i, j, lines, cols, size;
 	double val;
 	FILE *file = NULL;
 	
 	file = fopen(fname, "r");
 	if(!file){
 		printf("The file could not be opened!\n");
-		return NULL;
+		return -1;
 	}
 
-	e = fscanf(file, "%d", N);
-	size = (*N);
-	matrix = (double **)malloc(size * sizeof(double));	
-	for(i = 0; i < size; ++i){ matrix[i] = (double *)malloc(size * sizeof(double)); }
+	fscanf(file, "%d", N);
+	lines = (*N);
+	cols = lines+1;
+	(*matrix) = (double **)malloc(lines * sizeof(double));	
+	for(i = 0; i < lines; ++i){ (*matrix)[i] = (double *)malloc(cols * sizeof(double)); }
 	
-	i = j = 0;
-	while(!feof(file)){
-		if(i >= size || j >= size) break;
-		if(fscanf(file, "%lf", &val) != 1) return NULL;
-		
-		matrix[i][j] = val;
-		
-		j = (j + 1)%size;
-		if(j == 0) i++;
+	for(i = 0; i < lines; ++i){
+		for(j = 0; j < cols; ++j){
+			fscanf(file, "%lf", &(*matrix)[i][j]);
+		}	
 	}
 	
 	fclose(file);	
-	return matrix;
+	return cols;
 }
 
 int main(){
@@ -43,7 +39,10 @@ int main(){
 	if((pos=strchr(fname, '\n')) != NULL)
     	*pos = '\0';
 
-	matrix = read_matrix(fname, matrix, &N);
+	if(read_matrix(fname, &matrix, &N) == -1){
+		printf("The matrix couldn't be read!\n");
+		exit(1);
+	}
 	
 	if(!matrix){
 		printf("The matrix couldn't be read!\n");
@@ -51,7 +50,7 @@ int main(){
 	}
 	
 	for(i = 0; i < N; ++i){
-		for(j = 0; j < N; ++j){
+		for(j = 0; j < N+1; ++j){
 			printf("%lf ", matrix[i][j]);
 		}	
 		printf("\n");
