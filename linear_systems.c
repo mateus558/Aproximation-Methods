@@ -7,12 +7,14 @@
 #define MAXIT 1E2
 
 int read_matrix(char *fname, double ***matrix, int *N);
-int LU_decomposition(double** A, double ***L, double ***U, int N);
+double LU_decomposition(double **A, double ***L, double ***U, int N);
+double* LU_solve(double **A, int N);
 
 int main(){
 	int N, M, i, j, e;
 	char fname[50], *pos;
 	double **matrix = NULL, **L = NULL, **U = NULL;
+	double *x = NULL;
 	double detA = 1.0;
 
 	fgets(fname, sizeof(fname), stdin);
@@ -39,21 +41,11 @@ int main(){
 	
 	printf("\n");
 	
-	LU_decomposition(matrix, &L, &U, N);
+	x = LU_solve(matrix, N);
 	
-	for(i = 0; i < N; ++i){
-		for(j = 0; j < N; ++j){
-			printf("%lf ", U[i][j]);
-		}	
-		detA *= U[i][i];
-		printf("\n");
-	}
-	
-	if(detA == 0){
-		printf("Singular matrix.\n");
-		exit(1);
-	}
-	
+	for(i = 0; i < N; ++i)
+		printf("%lf ", x[i]);
+	printf("\n");
 	
 	return 0;
 }
@@ -85,10 +77,10 @@ int read_matrix(char *fname, double*** matrix, int *N){
 	return cols;
 }
 
-int LU_decomposition(double** A, double ***L, double ***U, int N){
+double LU_decomposition(double** A, double ***L, double ***U, int N){
 	int i, j, k;
 	double **Lk = NULL, **Uk = NULL;
-	double sumu = 0.0, suml = 0.0;
+	double sumu = 0.0, suml = 0.0, det = 1.0;
 	
 	Lk = (double **)malloc(N * sizeof(double));	
 	for(i = 0; i < N; ++i){ Lk[i] = (double *)malloc(N * sizeof(double)); Lk[i][i] = 1;}
@@ -113,6 +105,44 @@ int LU_decomposition(double** A, double ***L, double ***U, int N){
 	*U = Uk;
 	*L = Lk;
 	
-	return 1;
+	for(i = 0; i < N; ++i){
+		det *= Uk[i][i];
+	}
+	
+	return det;
 }
+
+double* LU_solve(double **A, int N){
+	int i, j;
+	double **L = NULL, **U = NULL, *y = NULL, *x = NULL;
+	double det = 1.0, sum;
+	
+	y = malloc(N * sizeof(double));
+	x = malloc(N * sizeof(double));
+	
+	det = LU_decomposition(A, &L, &U, N);
+	
+	if(det == 0.0){
+		return NULL;
+	}
+	
+	for(i = 0; i < N; ++i){
+		sum = 0.0;
+		for(j = 0; j < i; ++j){
+			sum += L[i][j]*y[j];
+		}
+		y[i] = A[i][N] - sum;
+	}
+	
+	for(i = N-1; i >= 0; --i){
+		sum = 0.0;
+		for(j = N-1; j > i; --j){
+			sum += U[i][j]*x[j];
+		}
+		x[i] = (y[i] - sum)/U[i][j];
+	}
+	
+	return x;
+}
+
 
