@@ -8,40 +8,36 @@
 
 int read_matrix(char *fname, double ***matrix, int *N);
 double LU_decomposition(double **A, double ***L, double ***U, int N);
+int is_singular(double **A, int N);
 double* LU_solve(double **A, int N);
 
 int main(){
-	int N, M, i, j, e;
+	int N, M, i, j;
 	char fname[50], *pos;
-	double **matrix = NULL, **L = NULL, **U = NULL;
+	double **A = NULL;
 	double *x = NULL;
-	double detA = 1.0;
 
 	fgets(fname, sizeof(fname), stdin);
 	if((pos=strchr(fname, '\n')) != NULL)
     	*pos = '\0';
 	
-	M = read_matrix(fname, &matrix, &N);
-	if(M == -1){
-		printf("The matrix couldn't be read!\n");
-		exit(1);
-	}
+	M = read_matrix(fname, &A, &N);
 	
-	if(!matrix){
+	if(M == -1 || !A){
 		printf("The matrix couldn't be read!\n");
 		exit(1);
 	}
 	
 	for(i = 0; i < N; ++i){
 		for(j = 0; j < M; ++j){
-			printf("%lf ", matrix[i][j]);
+			printf("%lf ", A[i][j]);
 		}	
 		printf("\n");
 	}
 	
 	printf("\n");
 	
-	x = LU_solve(matrix, N);
+	x = LU_solve(A, N);
 	
 	for(i = 0; i < N; ++i)
 		printf("%lf ", x[i]);
@@ -110,6 +106,20 @@ double LU_decomposition(double** A, double ***L, double ***U, int N){
 	}
 	
 	return det;
+}
+
+int is_singular(double **A, int N){
+	int i;
+	double **L = NULL, **U = NULL;
+	
+	if(A[0][0] == 0) return -1;
+	
+	for(i = 1; i < N; ++i){
+		if(LU_decomposition(A, &L, &U, i) == 0)
+			return -1;
+	}
+	
+	return 1;
 }
 
 double* LU_solve(double **A, int N){
