@@ -15,6 +15,7 @@ int relative_error(double* x, double* xk, int N);
 double* jacobi_method(double **A, int N, int (*stop_criterion)(double*, double*, int));
 double* seidel_method(double **A, int N, int (*stop_criterion)(double*, double*, int));
 double* gauss_elimination(double **A, int N);
+double* back_substitution(double** A, double* b, int N);
 double* LU_solve(double **A, int N);
 
 int main(){
@@ -43,7 +44,7 @@ int main(){
 	
 	printf("\n");
 	//if(is_singular(A, N) == -1) printf("Singular matrix\n");
-	x = jacobi_method(A, N, relative_error);
+	x = gauss_elimination(A, N);
 	
 	for(i = 0; i < N; ++i)
 		printf("%lf ", x[i]);
@@ -236,46 +237,44 @@ double* seidel_method(double **A, int N, int (*stop_criterion)(double*, double*,
 	return x;
 }
 
+double* back_substitution(double** A, double* b, int N){
+	int i, j;
+	double sum, *x = NULL;
+	
+	x = malloc(N * sizeof(double));
+	for(i = 0; i < N; ++i) x[i] = 0.0;
+	
+	x[N-1] = b[N-1]/A[N-1][N-1];
+	
+	for(i = N-1, sum = 0.0; i >= 0; --i){
+		sum = b[i];
+		for(j = i+1; j < N; ++j){
+			sum -= A[i][j]*x[j];
+		}
+		x[i] = sum/A[i][i];
+	}
+	
+	return x;
+}
+
 double* gauss_elimination(double **A, int N){
 	int i, j, k;
-	double sum = 0.0, *x = NULL, *b = NULL;
+	double ratio, sum = 0.0, *x = NULL, *b = NULL;
 	
 	x = malloc(N * sizeof(double));
 	b = malloc(N * sizeof(double));
 	
 	for(i = 0; i < N; ++i) b[i] = A[i][N];
 
-	for(i = 0; i < N-1; i++){ 
-		for(j = i; j < N; j++){ 
-			if(i > j){
-			   double ratio = A[j][i]/A[i][i]; 
-			   for(k = i; k < N; k++){ 
-			        A[j][k] -= (ratio*A[i][k]); 
-			        b[j] -= (ratio*b[i]); 
-			   } 
-			}
-       } 
-  	}
-	
-	/*for(i = 0; i < N-1; ++i){
-		for(j = i; j < N; ++j){
-			double ratio = A[j][i] / A[i][i];
-			for(k = i; k < N; ++k){	
-				A[j][k] -= A[i][k] * ratio;
-				A[i][N] -= ratio;
-			}
-		}
-	}*/
-	
-	/*for(k = 0; k < N-1; ++k){
+	for(k = 0; k < N - 1; ++k){
 		for(i = k + 1; i < N; ++i){
-			A[i][N] = A[i][N] - A[k][N] * (A[i][k] / A[k][k]);
-			for(j = k; j < N; ++j){
-				A[i][j] = A[i][j] - A[k][j] * (A[i][k] / A[k][k]);
+			ratio = A[i][k]/A[k][k];
+			for(j = k + 1; j < N; ++j){
+				A[i][j] -= ratio * A[k][j];
 			}
-			printf("%lf %d %d \n", A[i][k], k, i);
+			b[i] -= ratio * b[k];
 		}
-	}*/
+	}
 	
 	for(k = 0; k < N; ++k){
 		for(i = 0; i <= N; ++i){
@@ -284,13 +283,7 @@ double* gauss_elimination(double **A, int N){
 		printf("\n");
 	}
 	
-	for(i = N-1, sum = 0.0; i >= 0; --i){
-		x[i] = b[i];
-		for(j = i+1; j < N; ++j){
-			sum += A[i][j]*x[j];
-		}
-		x[i] = (b[i] - sum)/A[i][i];
-	}
+	x = back_substitution(A, b, N);
 	
 	return x;
 }
