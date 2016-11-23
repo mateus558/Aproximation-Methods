@@ -43,7 +43,7 @@ int main(){
 	
 	printf("\n");
 	//if(is_singular(A, N) == -1) printf("Singular matrix\n");
-	x = jacobi_method(A,N, relative_error);
+	x = jacobi_method(A, N, relative_error);
 	
 	for(i = 0; i < N; ++i)
 		printf("%lf ", x[i]);
@@ -122,7 +122,7 @@ int is_singular(double **A, int N){
 	
 	for(i = 1; i <= N; ++i){
 		if(LU_decomposition(A, &L, &U, i) == 0)
-			return -1;
+			return 0;
 	}
 	
 	return 1;
@@ -189,7 +189,7 @@ double* jacobi_method(double **A, int N, int (*stop_criterion)(double*, double*,
 
 double* seidel_method(double **A, int N, int (*stop_criterion)(double*, double*, int)){
 	int i, j, k;
-	double *x = NULL, *xk = NULL, *b = NULL, **L = NULL, **R = NULL;
+	double *x = NULL, *xk = NULL, *b = NULL, *D = NULL, **L = NULL, **R = NULL;
 
 	x = malloc(N * sizeof(double));
 	for(i = 0; i < N; ++i) x[i] = 0.0;
@@ -197,29 +197,39 @@ double* seidel_method(double **A, int N, int (*stop_criterion)(double*, double*,
 	xk = malloc(N * sizeof(double));
 	for(i = 0; i < N; ++i) xk[i] = 0.0;
 	
+	D = malloc(N * sizeof(double));
+	for(i = 0; i < N; ++i) D[i] = A[i][i];
+	
+	b = malloc(N * sizeof(double));
+	for(i = 0; i < N; ++i) b[i] = A[i][N]/D[i];
+	
 	L = malloc(N * sizeof(double));
 	R = malloc(N * sizeof(double));
+	
 	for(i = 0; i < N; ++i){
 		L[i] = (double *)malloc(N * sizeof(double));
 	 	R[i] = (double *)malloc(N * sizeof(double));
 		
 		for(j = 0; j < N; ++j){
 			if(i > j){
-				L[i][j] = A[i][j];
+				L[i][j] = -A[i][j]/D[i];
 				R[i][j] = 0.0;
 			}else if(i < j){
-				R[i][j] = A[i][j];
+				R[i][j] = -A[i][j]/D[i];
 				L[i][j] = 0.0;
 			}
 		}
 	}
 	
-	b = malloc(N * sizeof(double));
-	for(i = 0; i < N; ++i) b[i] = A[i][N];
-	
 	k = 0;
 	do{
-		
+		for(i = 0; i < N; ++i){
+			xk[i] = x[i];
+			for(j = 0; j < N; ++j){
+				x[i] += L[i][j]*x[j] + R[i][j]*xk[j];
+			}
+			x[i] += b[i];
+		}
 		k++;
 	}while(!stop_criterion(x, xk, N));	
 	
