@@ -12,6 +12,8 @@ int read_matrix(char *fname, double ***matrix, int *N);
 double LU_decomposition(double **A, double ***L, double ***U, int N);
 int is_singular(double **A, int N);
 int relative_error(double* x, double* xk, int N);
+double relative_error_value(double* x, double* xk, int N);
+int line_criterion(double **A, int N);
 double* jacobi_method(double **A, int N, int (*stop_criterion)(double*, double*, int));
 double* seidel_method(double **A, int N, int (*stop_criterion)(double*, double*, int));
 double* gauss_elimination(double **A, int N);
@@ -20,13 +22,14 @@ double* LU_solve(double **A, int N);
 
 int main(){
 	int N, M, i, j;
-	char fname[50], *pos;
+	char fname[3] = {'i', 'n', '\0'}, *pos;
 	double **A = NULL;
 	double *x = NULL;
 
-	fgets(fname, sizeof(fname), stdin);
+	/*fgets(fname, sizeof(fname), stdin);
 	if((pos=strchr(fname, '\n')) != NULL)
     	*pos = '\0';
+	*/
 	
 	M = read_matrix(fname, &A, &N);
 	
@@ -35,19 +38,21 @@ int main(){
 		exit(1);
 	}
 	
+	printf("Original matrix: \n\n");
+	
 	for(i = 0; i < N; ++i){
 		for(j = 0; j <= N; ++j){
+			if(j == N) printf(" | ");
 			printf("%lf ", A[i][j]);
 		}	
 		printf("\n");
 	}
-	
 	printf("\n");
-	//if(is_singular(A, N) == -1) printf("Singular matrix\n");
-	x = jacobi_method(A, N, relative_error);
 	
+	x = seidel_method(A, N, relative_error);
+	printf("\nSolution:\n");
 	for(i = 0; i < N; ++i)
-		printf("%lf ", x[i]);
+		printf("x[%d]: %lf, ", i, x[i]);
 	printf("\n");
 
 	return 0;
@@ -129,6 +134,44 @@ int is_singular(double **A, int N){
 	return 1;
 }
 
+int line_criterion(double **A, int N){
+	int i, j, sign = 1;
+	double alpha = 0.0, sum = 0.0, max_alpha = NEG_INF, ratio;
+	
+	for(i = 0; i < N; ++i){
+		for(j = 0; j < N; ++j){
+			if(i != j){
+				ratio = A[i][j] / A[i][i];
+				sign = (ratio < 0)?-1:1;
+				alpha += ratio * sign;
+			}
+		}
+		if(alpha > max_alpha) max_alpha = alpha;
+	}
+	
+	return (max_alpha < 1)?1:-1;
+}
+
+double relative_error_value(double* x, double* xk, int N){
+	double g_diff = NEG_INF, g = NEG_INF;
+	double *diff = NULL;
+	int i = 0, sign = 1;
+	
+	diff = malloc(N * sizeof(double));
+	
+	for(i = 0; i < N; ++i){
+		diff[i] = x[i] - xk[i];
+		sign = (diff[i] < 0)?-1:1;
+		diff[i] = sign * diff[i];
+	}
+	for(i = 0; i < N; ++i){
+		if(diff[i] > g_diff) g_diff = diff[i];
+		if(x[i] > g) g = x[i];
+	}
+
+	return g_diff/g;
+}
+
 int relative_error(double* x, double* xk, int N){
 	double g_diff = NEG_INF, g = NEG_INF;
 	double *diff = NULL;
@@ -156,6 +199,8 @@ double* jacobi_method(double **A, int N, int (*stop_criterion)(double*, double*,
 	
 	x = malloc(N * sizeof(double));
 	for(i = 0; i < N; ++i) x[i] = 0.0;
+	
+	if(line_criterion(A, N) == -1) return NULL;
 		
 	xk = malloc(N * sizeof(double));
 	for(i = 0; i < N; ++i) xk[i] = 0.0;
@@ -163,8 +208,29 @@ double* jacobi_method(double **A, int N, int (*stop_criterion)(double*, double*,
 	b = malloc(N * sizeof(double));
 	for(i = 0; i < N; ++i) b[i] = A[i][N];
 	
+	printf("\n");
+	for(i = 0; i <= N; ++i)	printf("-----------------");
+	printf("\n");
+	printf(" itr	");
+	for(i = 0; i < N; ++i){
+		printf("x[%d]		", i);
+	}
+	printf("  error");
+	printf("\n");
+	for(i = 0; i <= N; ++i)	printf("-----------------");
+	printf("\n");	
+	
 	k = 0;
+	
+	printf(" %d	", k);
+	for(i = 0; i < N; ++i){
+		printf("%lf	", x[i]);
+	}
+	printf("    -");
+	printf("\n");
+	
 	do{
+		printf(" %d	", k+1);
 		s = s1 = 0.0;
 		for(i = 0; i < N; ++i)
 			xk[i] = x[i];
@@ -178,10 +244,13 @@ double* jacobi_method(double **A, int N, int (*stop_criterion)(double*, double*,
 			}
 			
 			x[i] = (b[i] - s - s1)/A[i][i];
+			printf("%lf	", x[i]);
 		}
 		k++;
+		printf("%lf", relative_error_value(x, xk, N));
+		printf("\n");
 	}while(!stop_criterion(x, xk, N) && k < MAXIT);
-		printf("%d\n", k);
+
 	return x;
 }
 
@@ -192,17 +261,39 @@ double* seidel_method(double **A, int N, int (*stop_criterion)(double*, double*,
 	
 	x = malloc(N * sizeof(double));
 	for(i = 0; i < N; ++i) x[i] = 0.0;
-		
+	
+	if(line_criterion(A, N) == -1) return NULL;
+	
 	xk = malloc(N * sizeof(double));
 	for(i = 0; i < N; ++i) xk[i] = 0.0;
 		
 	b = malloc(N * sizeof(double));
 	for(i = 0; i < N; ++i) b[i] = A[i][N];
 	
+	printf("\n");
+	for(i = 0; i <= N; ++i)	printf("-----------------");
+	printf("\n");
+	printf(" itr	");
+	for(i = 0; i < N; ++i){
+		printf("x[%d]		", i);
+	}
+	printf("  error");
+	printf("\n");
+	for(i = 0; i <= N; ++i)	printf("-----------------");
+	printf("\n");	
+
 	k = 0;
+	
+	printf(" %d	", k);
+	for(i = 0; i < N; ++i){
+		printf("%lf	", x[i]);
+	}
+	printf("    -");
+	printf("\n");	
+	
 	do{
 		s = s1 = 0.0;
-		
+		printf(" %d	", k+1);
 		for(i = 0; i < N; ++i)
 			xk[i] = x[i];
 			
@@ -216,11 +307,12 @@ double* seidel_method(double **A, int N, int (*stop_criterion)(double*, double*,
 			}
 			
 			x[i] = (b[i] - s - s1)/A[i][i];
+			printf("%lf	", x[i]);
 		}
+		printf("%lf", relative_error_value(x, xk, N));
 		printf("\n");
 		k++;
 	}while(!stop_criterion(x, xk, N) && k < MAXIT);	
-	printf("%d\n", k);
 	return x;
 }
 
