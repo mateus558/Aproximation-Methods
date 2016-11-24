@@ -44,7 +44,7 @@ int main(){
 	
 	printf("\n");
 	//if(is_singular(A, N) == -1) printf("Singular matrix\n");
-	x = gauss_elimination(A, N);
+	x = jacobi_method(A, N, relative_error);
 	
 	for(i = 0; i < N; ++i)
 		printf("%lf ", x[i]);
@@ -130,110 +130,97 @@ int is_singular(double **A, int N){
 }
 
 int relative_error(double* x, double* xk, int N){
-	double diff = 0.0, g_diff = NEG_INF, g = NEG_INF;
-	int i;
+	double g_diff = NEG_INF, g = NEG_INF;
+	double *diff = NULL;
+	int i = 0, sign = 1;
+	
+	diff = malloc(N * sizeof(double));
 	
 	for(i = 0; i < N; ++i){
-		diff = abs(x[i] - xk[i]);
-		if(g_diff < diff) g_diff = diff;
-		if(g < abs(x[i])) g = abs(x[i]);
+		diff[i] = x[i] - xk[i];
+		sign = (diff[i] < 0)?-1:1;
+		diff[i] = sign * diff[i];
 	}
-	
+	for(i = 0; i < N; ++i){
+		if(diff[i] > g_diff) g_diff = diff[i];
+		if(x[i] > g) g = x[i];
+	}
+
 	return ((g_diff/g) < EPS)?1:0;
 }
 
 double* jacobi_method(double **A, int N, int (*stop_criterion)(double*, double*, int)){
 	int i, j, k;
-	double *x = NULL, *xk = NULL, *b = NULL, *D = NULL, **B = NULL;
-
+	double *x = NULL, *xk = NULL, *b = NULL;
+	double s, s1;
+	
 	x = malloc(N * sizeof(double));
 	for(i = 0; i < N; ++i) x[i] = 0.0;
 		
 	xk = malloc(N * sizeof(double));
 	for(i = 0; i < N; ++i) xk[i] = 0.0;
-	
-	D = malloc(N * sizeof(double));
-	for(i = 0; i < N; ++i) D[i] = A[i][i];
-	
-	b = malloc(N * sizeof(double));
-	for(i = 0; i < N; ++i) b[i] = A[i][N]/D[i];
-	
-	//Allocate iteration matrix
-	B = (double **)malloc(N * sizeof(double));
-	//Pre compute iteration matrix
-	for(i = 0; i < N; ++i){ 
-		B[i] = (double *)malloc(N * sizeof(double)); 
 		
-		for(j = 0; j < N; ++j){
-			if(i != j){
-				B[i][j] = -A[i][j]/D[i];
-			}else{
-				B[i][j] = 0.0;
-			}			
-		}
-	}
+	b = malloc(N * sizeof(double));
+	for(i = 0; i < N; ++i) b[i] = A[i][N];
 	
 	k = 0;
 	do{
-		for(i = 0; i < N; ++i){
+		s = s1 = 0.0;
+		for(i = 0; i < N; ++i)
 			xk[i] = x[i];
-			for(j = 0; j < N; ++j){
-				x[i] += B[i][j]*x[j];
+	
+		for(i = 0; i < N; ++i){
+			for(j = 0; j < i - 1; ++j){
+				s += A[i][j] * xk[j];
 			}
-			x[i] += b[i];
+			for(j = i + 1; j < N; ++j){
+				s1 += A[i][j] * xk[j];
+			}
+			
+			x[i] = (b[i] - s - s1)/A[i][i];
 		}
 		k++;
-	}while(!stop_criterion(x, xk, N));
-	
+	}while(!stop_criterion(x, xk, N) && k < MAXIT);
+		printf("%d\n", k);
 	return x;
 }
 
 double* seidel_method(double **A, int N, int (*stop_criterion)(double*, double*, int)){
 	int i, j, k;
-	double *x = NULL, *xk = NULL, *b = NULL, *D = NULL, **L = NULL, **R = NULL;
-
+	double *x = NULL, *xk = NULL, *b = NULL;
+	double s, s1;
+	
 	x = malloc(N * sizeof(double));
 	for(i = 0; i < N; ++i) x[i] = 0.0;
 		
 	xk = malloc(N * sizeof(double));
 	for(i = 0; i < N; ++i) xk[i] = 0.0;
-	
-	D = malloc(N * sizeof(double));
-	for(i = 0; i < N; ++i) D[i] = A[i][i];
-	
-	b = malloc(N * sizeof(double));
-	for(i = 0; i < N; ++i) b[i] = A[i][N]/D[i];
-	
-	L = malloc(N * sizeof(double));
-	R = malloc(N * sizeof(double));
-	
-	for(i = 0; i < N; ++i){
-		L[i] = (double *)malloc(N * sizeof(double));
-	 	R[i] = (double *)malloc(N * sizeof(double));
 		
-		for(j = 0; j < N; ++j){
-			if(i > j){
-				L[i][j] = -A[i][j]/D[i];
-				R[i][j] = 0.0;
-			}else if(i < j){
-				R[i][j] = -A[i][j]/D[i];
-				L[i][j] = 0.0;
-			}
-		}
-	}
+	b = malloc(N * sizeof(double));
+	for(i = 0; i < N; ++i) b[i] = A[i][N];
 	
 	k = 0;
 	do{
-		for(i = 0; i < N; ++i){
+		s = s1 = 0.0;
+		
+		for(i = 0; i < N; ++i)
 			xk[i] = x[i];
-			for(j = 0; j < N; ++j){
-				x[i] += L[i][j]*x[j] + R[i][j]*xk[j];
+			
+		for(i = 0; i < N; ++i){
+			
+			for(j = 0; j < i - 1; ++j){
+				s += A[i][j] * x[j];
 			}
-			x[i] += b[i];
+			for(j = i + 1; j < N; ++j){
+				s1 += A[i][j] * xk[j];
+			}
+			
+			x[i] = (b[i] - s - s1)/A[i][i];
 		}
+		printf("\n");
 		k++;
-	}while(!stop_criterion(x, xk, N));	
-	
+	}while(!stop_criterion(x, xk, N) && k < MAXIT);	
+	printf("%d\n", k);
 	return x;
 }
 
