@@ -27,11 +27,6 @@ int main(){
 	char fname[3] = {'i', 'n', '\0'}, *pos;
 	double **A = NULL;
 	double *x = NULL;
-
-	/*fgets(fname, sizeof(fname), stdin);
-	if((pos=strchr(fname, '\n')) != NULL)
-    	*pos = '\0';
-	*/
 	
 	M = read_matrix(fname, &A, &N);
 	
@@ -72,6 +67,12 @@ int main(){
 	}else{
 		printf("\nCouldn't find the solution!\n");
 	}
+	
+	free(x);
+	for(i = 0; i < N; ++i)
+		free(A[i]);
+	free(A);
+	
 	return 0;
 }
 
@@ -238,7 +239,9 @@ double** swap_lines(double **A, int N, int L1, int L2){
 			A[i][j] = res[i][j];
 		}
 		free(res[i]);
-	}	
+		free(P[i]);
+	}
+	free(P);
 	free(res);
 	free(b);
 	
