@@ -24,7 +24,7 @@ double* LU_solve(double **A, int N);
 
 int main(){
 	int N, M, i, j, o;
-	char fname[3] = {'i', 'n', '\0'}, *pos;
+	char fname[3] = {'i', 'n', '\0'};
 	double **A = NULL;
 	double *x = NULL;
 	
@@ -62,7 +62,7 @@ int main(){
 	if(x){
 		printf("\nSolution:\n");
 		for(i = 0; i < N; ++i)
-			printf("x[%d]: %lf, ", i, x[i]);
+			printf("x[%d]: %lf\n", i, x[i]);
 		printf("\n");
 	}else{
 		printf("\nCouldn't find the solution!\n");
@@ -349,19 +349,20 @@ double* jacobi_method(double **A, int N, int (*stop_criterion)(double*, double*,
 	
 	do{
 		printf(" %d	", k+1);
-		s = 0.0;
 		for(i = 0; i < N; ++i)
 			xk[i] = x[i];
 	
 		for(i = 0; i < N; ++i){
+			s = b[i];
+			
 			for(j = 0; j <= i - 1; ++j){
-				s += A[i][j] * xk[j];
+				s -= A[i][j] * xk[j];
 			}
 			for(j = i + 1; j < N; ++j){
-				s += A[i][j] * xk[j];
+				s -= A[i][j] * xk[j];
 			}
 			
-			x[i] = (b[i] - s)/A[i][i];
+			x[i] = s/A[i][i];
 			printf("%lf	", x[i]);
 		}
 		k++;
@@ -446,15 +447,16 @@ double* seidel_method(double **A, int N, int (*stop_criterion)(double*, double*,
 			xk[i] = x[i];
 			
 		for(i = 0; i < N; ++i){
+			s = b[i];
 			
 			for(j = 0; j <= i - 1; ++j){
-				s += A[i][j] * x[j];
+				s -= A[i][j] * x[j];
 			}
 			for(j = i + 1; j < N; ++j){
-				s += A[i][j] * xk[j];
+				s -= A[i][j] * xk[j];
 			}
 			
-			x[i] = (b[i] - s)/A[i][i];
+			x[i] = s/A[i][i];
 			printf("%lf	", x[i]);
 		}
 		printf("%lf", relative_error_value(x, xk, N));
