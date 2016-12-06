@@ -11,13 +11,12 @@
 int read_matrix(char *fname, double ***matrix, int *N);
 void print_matrix(double **A, int N);
 int is_singular(double **A, int N);
-int relative_error(double* x, double* xk, int N);
-double relative_error_value(double* x, double* xk, int N);
+int relative_error(double* x, double* xk, int N, double *value);
 int line_criterion(double **A, int N);
 double** swap_lines(double **A, int N, int L1, int L2);
 double LU_decomposition(double **A, double ***L, double ***U, int N);
-double* jacobi_method(double **A, int N, int (*stop_criterion)(double*, double*, int));
-double* seidel_method(double **A, int N, int (*stop_criterion)(double*, double*, int));
+double* jacobi_method(double **A, int N, int (*stop_criterion)(double*, double*, int, double*));
+double* seidel_method(double **A, int N, int (*stop_criterion)(double*, double*, int, double*));
 double* gauss_elimination(double **A, int N);
 double* back_substitution(double** A, double* b, int N);
 double* LU_solve(double **A, int N);
@@ -155,7 +154,7 @@ int line_criterion(double **A, int N){
 	return 1;
 }
 
-double relative_error_value(double* x, double* xk, int N){
+int relative_error(double *x, double *xk, int N, double *value){
 	double g_diff = NEG_INF, g = NEG_INF;
 	double *diff = NULL;
 	int i = 0;
@@ -169,30 +168,11 @@ double relative_error_value(double* x, double* xk, int N){
 		if(diff[i] > g_diff) g_diff = diff[i];
 		if(x[i] > g) g = x[i];
 	}
+	*value = fabs(g_diff/g);
 
 	free(diff);
 
-	return fabs(g_diff/g);
-}
-
-int relative_error(double* x, double* xk, int N){
-	double g_diff = NEG_INF, g = NEG_INF;
-	double *diff = NULL;
-	int i = 0;
-	
-	diff = malloc(N * sizeof(double));
-	
-	for(i = 0; i < N; ++i){
-		diff[i] = fabs(x[i] - xk[i]);
-	}
-	for(i = 0; i < N; ++i){
-		if(diff[i] > g_diff) g_diff = diff[i];
-		if(x[i] > g) g = x[i];
-	}
-
-	free(diff);
-
-	return ((fabs(g_diff/g)) < EPS)?1:0;
+	return (*value < EPS)?1:0;
 }
 
 double** swap_lines(double **A, int N, int L1, int L2){
@@ -283,9 +263,9 @@ double LU_decomposition(double** A, double ***L, double ***U, int N){
 	return det;
 }
 
-double* jacobi_method(double **A, int N, int (*stop_criterion)(double*, double*, int)){
+double* jacobi_method(double **A, int N, int (*stop_criterion)(double*, double*, int, double*)){
 	int i, j, k, l = -1;
-	double *x = NULL, *xk = NULL, *b = NULL;
+	double *x = NULL, *xk = NULL, *b = NULL, e = 0.0;
 	double s;
 	
 	x = malloc(N * sizeof(double));
@@ -366,9 +346,9 @@ double* jacobi_method(double **A, int N, int (*stop_criterion)(double*, double*,
 			printf("%lf	", x[i]);
 		}
 		k++;
-		printf("%lf", relative_error_value(x, xk, N));
+		printf("%lf", e);
 		printf("\n");
-	}while(!stop_criterion(x, xk, N) && k < MAXIT);
+	}while(!stop_criterion(x, xk, N, &e) && k < MAXIT);
 
 	free(xk);
 	free(b);
@@ -376,9 +356,9 @@ double* jacobi_method(double **A, int N, int (*stop_criterion)(double*, double*,
 	return x;
 }
 
-double* seidel_method(double **A, int N, int (*stop_criterion)(double*, double*, int)){
+double* seidel_method(double **A, int N, int (*stop_criterion)(double*, double*, int, double*)){
 	int i, j, k, l = -1;
-	double *x = NULL, *xk = NULL, *b = NULL;
+	double *x = NULL, *xk = NULL, *b = NULL, e = 0.0;
 	double s;
 	
 	x = malloc(N * sizeof(double));
@@ -459,10 +439,10 @@ double* seidel_method(double **A, int N, int (*stop_criterion)(double*, double*,
 			x[i] = s/A[i][i];
 			printf("%lf	", x[i]);
 		}
-		printf("%lf", relative_error_value(x, xk, N));
+		printf("%lf", e);
 		printf("\n");
 		k++;
-	}while(!stop_criterion(x, xk, N) && k < MAXIT);	
+	}while(!stop_criterion(x, xk, N, &e) && k < MAXIT);	
 	
 	free(xk);
 	free(b);
