@@ -203,12 +203,10 @@ double** swap_lines(double **A, int N, int L1, int L2){
 	
 	for(i = 0; i < N; i++){
     	for(j = 0; j < N; j++){
-    		for(k = 0; k < N; k++){
+    		for(k = 0, sum = 0.0; k < N; k++){
     			sum += P[i][k] * A[k][j];
         	}
- 
         	res[i][j] = sum;
-        	sum = 0.0;
     	}
 	}
 	
@@ -341,9 +339,7 @@ double* jacobi_method(double **A, int N, int (*stop_criterion)(double*, double*,
 		for(i = 0; i < N; ++i)
 			xk[i] = x[i];
 	
-		for(i = 0; i < N; ++i){
-			s = b[i];
-			
+		for(i = 0, s = b[i]; i < N; ++i){
 			for(j = 0; j <= i - 1; ++j){
 				s -= A[i][j] * xk[j];
 			}
@@ -417,9 +413,7 @@ double* seidel_method(double **A, int N, int (*stop_criterion)(double*, double*,
 		for(i = 0; i < N; ++i)
 			xk[i] = x[i];
 			
-		for(i = 0; i < N; ++i){
-			s = b[i];
-			
+		for(i = 0, s = b[i]; i < N; ++i){
 			for(j = 0; j <= i - 1; ++j){
 				s -= A[i][j] * x[j];
 			}
@@ -449,8 +443,7 @@ double* back_substitution(double** A, double* b, int N){
 	
 	x[N-1] = b[N-1]/A[N-1][N-1];
 	
-	for(i = N-1, sum = 0.0; i >= 0; --i){
-		sum = b[i];
+	for(i = N-1, sum = b[i]; i >= 0; --i){
 		for(j = i+1; j < N; ++j){
 			sum -= A[i][j]*x[j];
 		}
@@ -532,16 +525,14 @@ double* LU_solve(double **A, int N){
 		return NULL;
 	}
 	
-	for(i = 0; i < N; ++i){
-		sum = 0.0;
+	for(i = 0, sum = 0.0; i < N; ++i){
 		for(j = 0; j < i; ++j){
 			sum += L[i][j]*y[j];
 		}
 		y[i] = A[i][N] - sum;
 	}
 	
-	for(i = N-1; i >= 0; --i){
-		sum = 0.0;
+	for(i = N-1, sum = 0.0; i >= 0; --i){
 		for(j = N-1; j > i; --j){
 			sum += U[i][j]*x[j];
 		}
