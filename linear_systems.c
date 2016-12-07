@@ -154,13 +154,14 @@ int line_criterion(double **A, int N){
 	double alpha = 0.0, sum = 0.0;
 	
 	for(i = 0; i < N; ++i){
+		sum = 0.0;
 		for(j = 0; j < i; ++j){
 			sum += fabs(A[i][j]);
 		}
 		for(j = i+1; j < N; ++j){
 			sum += fabs(A[i][j]);
 		}
-		if(sum < fabs(A[i][i])) return 0;
+		if(sum >= fabs(A[i][i])) return 0;
 	}
 	
 	return 1;
@@ -322,7 +323,7 @@ double* jacobi_method(double **A, int N, int (*stop_criterion)(double*, double*,
 	printf("\nConditioned Matrix:\n");
 	print_matrix(A, N);
 	
-	if(line_criterion(A, N)){ 
+	if(!line_criterion(A, N)){ 
 		printf("\nThis system does not converge.\n");
 		return NULL; 
 	}
@@ -355,7 +356,8 @@ double* jacobi_method(double **A, int N, int (*stop_criterion)(double*, double*,
 		for(i = 0; i < N; ++i)
 			xk[i] = x[i];
 	
-		for(i = 0, s = b[i]; i < N; ++i){
+		for(i = 0; i < N; ++i){
+			s = b[i];
 			for(j = 0; j <= i - 1; ++j){
 				s -= A[i][j] * xk[j];
 			}
@@ -397,7 +399,7 @@ double* seidel_method(double **A, int N, int (*stop_criterion)(double*, double*,
 	printf("\nConditioned Matrix:\n");
 	print_matrix(A, N);
 	
-	if(line_criterion(A, N)){ 
+	if(!line_criterion(A, N)){ 
 		printf("\nThis system does not converge.\n");
 		return NULL; 
 	}
@@ -431,7 +433,8 @@ double* seidel_method(double **A, int N, int (*stop_criterion)(double*, double*,
 		for(i = 0; i < N; ++i)
 			xk[i] = x[i];
 			
-		for(i = 0, s = b[i]; i < N; ++i){
+		for(i = 0; i < N; ++i){
+			s = b[i];
 			for(j = 0; j <= i - 1; ++j){
 				s -= A[i][j] * x[j];
 			}
