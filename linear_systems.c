@@ -13,6 +13,7 @@ void print_matrix(double **A, int N);
 int is_singular(double **A, int N);
 int relative_error(double* x, double* xk, int N, double *value);
 int line_criterion(double **A, int N);
+double** conditioned_matrix(double **A, int N);
 double** swap_lines(double **A, int N, int L1, int L2);
 double LU_decomposition(double **A, double ***L, double ***U, int N);
 double* jacobi_method(double **A, int N, int (*stop_criterion)(double*, double*, int, double*));
@@ -228,6 +229,32 @@ double** swap_lines(double **A, int N, int L1, int L2){
 	return A;
 }
 
+double** conditioned_matrix(double **A, int N){
+	int i, j, l = -1;
+	
+	for(i = 0; i < N; ++i){
+		for(j = 0; j < i; ++j){
+			if(fabs(A[j][i]) > fabs(A[i][i]) && A[j][i] != 0){ l = j; break; }
+		}
+		if(l != -1)
+			for(j = 0; j < i; ++j){
+				if(fabs(A[j][i]) > fabs(A[l][i])) l = j;
+			}
+		for(j = i+1; j < N; ++j){
+			if(fabs(A[j][i]) > fabs(A[i][i]) && A[j][i] != 0){ l = j; break; }
+		}
+		if(l != -1)
+			for(j = i+1; j < N; ++j){
+				if(fabs(A[j][i]) > fabs(A[l][i])) l = j;
+			}
+		if(l != -1)
+			A = swap_lines(A, N, i, l);
+		l = -1;
+	}
+	
+	return A;
+}
+
 double LU_decomposition(double** A, double ***L, double ***U, int N){
 	int i, j, k;
 	double **Lk = NULL, **Uk = NULL;
@@ -264,7 +291,7 @@ double LU_decomposition(double** A, double ***L, double ***U, int N){
 }
 
 double* jacobi_method(double **A, int N, int (*stop_criterion)(double*, double*, int, double*)){
-	int i, j, k, l = -1;
+	int i, j, k;
 	double *x = NULL, *xk = NULL, *b = NULL, e = 0.0;
 	double s;
 	
@@ -276,25 +303,7 @@ double* jacobi_method(double **A, int N, int (*stop_criterion)(double*, double*,
 		
 	b = malloc(N * sizeof(double));
 	
-	for(i = 0; i < N; ++i){
-		for(j = 0; j < i; ++j){
-			if(fabs(A[j][i]) > fabs(A[i][i]) && A[j][i] != 0){ l = j; break; }
-		}
-		if(l != -1)
-			for(j = 0; j < i; ++j){
-				if(fabs(A[j][i]) > fabs(A[l][i])) l = j;
-			}
-		for(j = i+1; j < N; ++j){
-			if(fabs(A[j][i]) > fabs(A[i][i]) && A[j][i] != 0){ l = j; break; }
-		}
-		if(l != -1)
-			for(j = i+1; j < N; ++j){
-				if(fabs(A[j][i]) > fabs(A[l][i])) l = j;
-			}
-		if(l != -1)
-			A = swap_lines(A, N, i, l);
-		l = -1;
-	}
+	A = conditioned_matrix(A, N);
 	
 	printf("\nConditioned Matrix:\n");
 	print_matrix(A, N);
@@ -357,7 +366,7 @@ double* jacobi_method(double **A, int N, int (*stop_criterion)(double*, double*,
 }
 
 double* seidel_method(double **A, int N, int (*stop_criterion)(double*, double*, int, double*)){
-	int i, j, k, l = -1;
+	int i, j, k;
 	double *x = NULL, *xk = NULL, *b = NULL, e = 0.0;
 	double s;
 	
@@ -369,25 +378,7 @@ double* seidel_method(double **A, int N, int (*stop_criterion)(double*, double*,
 		
 	b = malloc(N * sizeof(double));
 	
-	for(i = 0; i < N; ++i){
-		for(j = 0; j < i; ++j){
-			if(fabs(A[j][i]) > fabs(A[i][i]) && A[j][i] != 0){ l = j; break; }
-		}
-		if(l != -1)
-			for(j = 0; j < i; ++j){
-				if(fabs(A[j][i]) > fabs(A[l][i])) l = j;
-			}
-		for(j = i+1; j < N; ++j){
-			if(fabs(A[j][i]) > fabs(A[i][i]) && A[j][i] != 0){ l = j; break; }
-		}
-		if(l != -1)
-			for(j = i+1; j < N; ++j){
-				if(fabs(A[j][i]) > fabs(A[l][i])) l = j;
-			}
-		if(l != -1)
-			A = swap_lines(A, N, i, l);
-		l = -1;
-	}
+	A = conditioned_matrix(A, N);
 	
 	printf("\nConditioned Matrix:\n");
 	print_matrix(A, N);
@@ -476,25 +467,7 @@ double* gauss_elimination(double **A, int N){
 	x = malloc(N * sizeof(double));
 	b = malloc(N * sizeof(double));
 	
-	for(i = 0; i < N; ++i){
-		for(j = 0; j < i; ++j){
-			if(fabs(A[j][i]) > fabs(A[i][i]) && A[j][i] != 0){ l = j; break; }
-		}
-		if(l != -1)
-			for(j = 0; j < i; ++j){
-				if(fabs(A[j][i]) > fabs(A[l][i])) l = j;
-			}
-		for(j = i+1; j < N; ++j){
-			if(fabs(A[j][i]) > fabs(A[i][i]) && A[j][i] != 0){ l = j; break; }
-		}
-		if(l != -1)
-			for(j = i+1; j < N; ++j){
-				if(fabs(A[j][i]) > fabs(A[l][i])) l = j;
-			}
-		if(l != -1)
-			A = swap_lines(A, N, i, l);
-		l = -1;
-	}
+	A = conditioned_matrix(A, N);
 	
 	for(i = 0; i < N; ++i) b[i] = A[i][N];
 	
