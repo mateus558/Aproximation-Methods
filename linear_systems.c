@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <math.h>
 
 #define EPS 1E-5
@@ -116,22 +115,33 @@ void print_matrix(double **A, int N){
 }
 
 int is_singular(double **A, int N){
-	int i, ret = 1;
-	double **L = NULL, **U = NULL;
+	int i, j, ret = 0;
+	double **L = NULL, **U = NULL, **X = NULL;
 	
 	if(A[0][0] == 0) return -1;
 	
+	X = (double **)malloc(N * sizeof(double));	
+	for(i = 0; i < N; ++i){ X[i] = (double *)malloc(N+1 * sizeof(double)); }
+	
+	for(i = 0; i < N; ++i){
+		for(j = 0; j < N; ++j){
+			X[i][j] = A[i][j];
+		}
+	}
+	
 	for(i = 1; i <= N; ++i){
-		if(LU_decomposition(A, &L, &U, i) == 0){
-			ret = 0;
+		if(LU_decomposition(X, &L, &U, i) == 0){
+			ret = 1;
 			break;	
 		}
 	}
 	
 	for(i = 0; i < N; ++i){
+		free(X[i]);
 		free(L[i]);
 		free(U[i]);
 	}
+	free(X);
 	free(L);
 	free(U);
 	
@@ -358,7 +368,7 @@ double* jacobi_method(double **A, int N, int (*stop_criterion)(double*, double*,
 	free(xk);
 	free(b);
 
-	return x;
+	return (k == MAXIT)?NULL:x;
 }
 
 double* seidel_method(double **A, int N, int (*stop_criterion)(double*, double*, int, double*)){
@@ -432,7 +442,7 @@ double* seidel_method(double **A, int N, int (*stop_criterion)(double*, double*,
 	free(xk);
 	free(b);
 	
-	return x;
+	return (k == MAXIT)?NULL:x;
 }
 
 double* back_substitution(double** A, double* b, int N){
@@ -443,8 +453,8 @@ double* back_substitution(double** A, double* b, int N){
 	
 	x[N-1] = b[N-1]/A[N-1][N-1];
 	
-	for(i = N-1, sum = b[i]; i >= 0; --i){
-		for(j = i+1; j < N; ++j){
+	for(i = N-1; i >= 0; --i){
+		for(j = i+1, sum = b[i]; j < N; ++j){
 			sum -= A[i][j]*x[j];
 		}
 		x[i] = sum/A[i][i];
@@ -461,6 +471,11 @@ double* gauss_elimination(double **A, int N){
 	b = malloc(N * sizeof(double));
 	
 	A = conditioned_matrix(A, N);
+	
+	if(is_singular(A, N)){
+		printf("\nSingular matrix.\n");
+		return NULL;
+	}
 	
 	for(i = 0; i < N; ++i) b[i] = A[i][N];
 	
@@ -500,7 +515,7 @@ double* gauss_elimination(double **A, int N){
 	}	
 	
 	if(flag){
-		printf("\nSingular matrix.\n");
+		printf("\nInfinity solutions.\n");
 		return NULL;
 	}
 	
@@ -525,16 +540,16 @@ double* LU_solve(double **A, int N){
 		return NULL;
 	}
 	
-	for(i = 0, sum = 0.0; i < N; ++i){
-		for(j = 0; j < i; ++j){
-			sum += L[i][j]*y[j];
+	for(i = 0; i < N; ++i){
+		for(j = 0, sum = 0.0; j < i; ++j){
+			sum += L[i][j] * y[j];
 		}
 		y[i] = A[i][N] - sum;
 	}
 	
-	for(i = N-1, sum = 0.0; i >= 0; --i){
-		for(j = N-1; j > i; --j){
-			sum += U[i][j]*x[j];
+	for(i = N-1; i >= 0; --i){
+		for(j = N-1, sum = 0.0; j > i; --j){
+			sum += U[i][j] * x[j];
 		}
 		x[i] = (y[i] - sum)/U[i][j];
 	}
