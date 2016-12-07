@@ -67,11 +67,11 @@ int main(){
 		printf("\nCouldn't find the solution!\n");
 	}
 	
-	free(x);
 	for(i = 0; i < N; ++i)
 		free(A[i]);
 	free(A);
-	
+	free(x);
+		
 	return 0;
 }
 
@@ -134,18 +134,17 @@ int is_singular(double **A, int N){
 			ret = 1;
 			break;	
 		}
+		for(j = 0; j < i; ++j){
+			free(L[j]);
+			free(U[j]);
+		}
+		free(L);
+		free(U);
 	}
-	
-	for(j = 0; j < i; ++j){
-		free(L[j]);
-		free(U[j]);
-	}
+
 	for(i = 0; i < N; ++i)
 		free(X[i]);
-	
 	free(X);
-	free(L);
-	free(U);
 	
 	return ret;
 }
@@ -246,19 +245,23 @@ double** conditioned_matrix(double **A, int N){
 		for(j = 0; j < i; ++j){
 			if(fabs(A[j][i]) > fabs(A[i][i]) && A[j][i] != 0){ l = j; break; }
 		}
-		if(l != -1)
+		
+		if(l != -1){
 			for(j = 0; j < i; ++j){
 				if(fabs(A[j][i]) > fabs(A[l][i])) l = j;
 			}
+		}
+		
 		for(j = i+1; j < N; ++j){
 			if(fabs(A[j][i]) > fabs(A[i][i]) && A[j][i] != 0){ l = j; break; }
 		}
-		if(l != -1)
+		
+		if(l != -1){
 			for(j = i+1; j < N; ++j){
 				if(fabs(A[j][i]) > fabs(A[l][i])) l = j;
 			}
-		if(l != -1)
 			A = swap_lines(A, N, i, l);
+		}
 		l = -1;
 	}
 	
@@ -368,6 +371,8 @@ double* jacobi_method(double **A, int N, int (*stop_criterion)(double*, double*,
 		printf("\n");
 	}while(!stop_criterion(x, xk, N, &e) && k < MAXIT);
 
+	if(k == MAXIT) printf("Convergency wasn't reached.\n\n");
+
 	free(xk);
 	free(b);
 
@@ -442,6 +447,8 @@ double* seidel_method(double **A, int N, int (*stop_criterion)(double*, double*,
 		k++;
 	}while(!stop_criterion(x, xk, N, &e) && k < MAXIT);	
 	
+	if(k == MAXIT) printf("Convergency wasn't reached.\n\n");
+	
 	free(xk);
 	free(b);
 	
@@ -496,7 +503,6 @@ double* gauss_elimination(double **A, int N){
 					if(l != -1 && A[j][k] != 0 && fabs(A[j][k]) > fabs(A[l][k])) l = j;
 				}
 				
-				printf("%d %d\n", k, l);
 				if(l != -1)
 					A = swap_lines(A, N, k, l);
 				l = -1;
