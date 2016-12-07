@@ -120,7 +120,7 @@ int is_singular(double **A, int N){
 	
 	if(A[0][0] == 0) return -1;
 	
-	X = (double **)malloc(N * sizeof(double));	
+	X = (double **)malloc(N * sizeof(double*));	
 	for(i = 0; i < N; ++i){ X[i] = (double *)malloc(N+1 * sizeof(double)); }
 	
 	for(i = 0; i < N; ++i){
@@ -136,11 +136,13 @@ int is_singular(double **A, int N){
 		}
 	}
 	
-	for(i = 0; i < N; ++i){
-		free(X[i]);
-		free(L[i]);
-		free(U[i]);
+	for(j = 0; j < i; ++j){
+		free(L[j]);
+		free(U[j]);
 	}
+	for(i = 0; i < N; ++i)
+		free(X[i]);
+	
 	free(X);
 	free(L);
 	free(U);
@@ -269,7 +271,8 @@ double LU_decomposition(double** A, double ***L, double ***U, int N){
 	double sumu = 0.0, suml = 0.0, det = 1.0;
 	
 	Lk = (double **)malloc(N * sizeof(double));	
-	for(i = 0; i < N; ++i){ Lk[i] = (double *)malloc(N * sizeof(double)); Lk[i][i] = 1;}
+	for(i = 0; i < N; ++i){ Lk[i] = (double *)malloc(N * sizeof(double)); }
+	for(i = 0; i < N; ++i){ Lk[i][i] = 1; }
 	Uk = (double **)malloc(N * sizeof(double));	
 	for(i = 0; i < N; ++i){ Uk[i] = (double *)malloc(N * sizeof(double)); }
 	
@@ -471,6 +474,9 @@ double* gauss_elimination(double **A, int N){
 	b = malloc(N * sizeof(double));
 	
 	A = conditioned_matrix(A, N);
+		
+	printf("\nPivoted Matrix: \n");
+	print_matrix(A, N);
 	
 	if(is_singular(A, N)){
 		printf("\nSingular matrix.\n");
@@ -478,9 +484,6 @@ double* gauss_elimination(double **A, int N){
 	}
 	
 	for(i = 0; i < N; ++i) b[i] = A[i][N];
-	
-	printf("\nPivoted Matrix: \n");
-	print_matrix(A, N);
 	
 	for(k = 0; k < N - 1; ++k){
 		for(i = k + 1; i < N; ++i){
