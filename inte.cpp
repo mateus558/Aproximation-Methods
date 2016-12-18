@@ -52,6 +52,16 @@ int main(){
 			
 			c = squared_minimun_polynomial(points, d, quad_mean);
 			break;
+		case 2:
+			cout << "\nLeast square method with exponential\n" << endl;
+			
+			c = squared_minimun_exponential(points, quad_mean);		
+			break;
+		case 3:
+			cout << "\nLeast square method with exponential\n" << endl;
+			
+			c = squared_minimun_four(points, quad_mean);		
+			break;
 		default:
 			cout << "Unknown option, aborting..." << endl;
 			return 0;  
