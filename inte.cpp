@@ -174,16 +174,6 @@ vector<double> gauss_elimination(dMatrix A, int N){
 	double ratio, sum = 0.0; 
 	vector<double> b(N, 0.0), x(N, 0.0);
 	
-	/*A = conditioned_matrix(A, N);
-		
-	printf("\nPivoted Matrix: \n");
-	print_matrix(A, N);
-	
-	if(is_singular(A, N)){
-		printf("\nSingular matrix.\n");
-		return NULL;
-	}*/
-	
 	for(i = 0; i < N; ++i) b[i] = A[i][N];
 	
 	for(k = 0; k < N - 1; ++k){
@@ -224,7 +214,7 @@ vector<double> gauss_elimination(dMatrix A, int N){
 
 vector<double> squared_minimun_polynomial(vector<Point> points, int degree, double &quad_mean){
 	int i, j, k, size = degree+1, psize = points.size();
-	double quad_rest = 0.0;
+	double quad_rest = 0.0, s = 0.0;
 	vector<double> x_sums(2*degree+1, 0.0), y_sums(degree+1, 0.0), c(degree+1);
 	dMatrix matrix(size, vector<double>(size + 1, 0.0));
 	
@@ -246,10 +236,13 @@ vector<double> squared_minimun_polynomial(vector<Point> points, int degree, doub
 	
 	c = gauss_elimination(matrix, size);
 	
-	for(i = 0; i < size; ++i){
-		quad_rest += c[i] * x_sums[i]; 
+	for(i = 0; i < psize; ++i){
+		s = points[i].y;
+		for(j = 0; j < size; ++j){
+			s -= c[j] * pow(points[i].x, j); 
+		}
+		quad_rest += s;
 	}
-	quad_rest = y_sums[0] - quad_rest;
 	quad_mean = quad_rest / x_sums[0];
 	
 	return c;
@@ -258,7 +251,7 @@ vector<double> squared_minimun_polynomial(vector<Point> points, int degree, doub
 vector<double> squared_minimun_exponential(vector<Point> points, double &quad_mean){
 	int degree = 1;
 	int i, j, k, size = degree+1, psize = points.size();
-	double quad_rest = 0.0;
+	double quad_rest = 0.0, s = 0.0;
 	vector<double> x_sums(2*degree+1, 0.0), y_sums(degree+1, 0.0), c(degree+1);
 	dMatrix matrix(size, vector<double>(size + 1, 0.0));
 	
@@ -281,10 +274,13 @@ vector<double> squared_minimun_exponential(vector<Point> points, double &quad_me
 	c = gauss_elimination(matrix, size);	
 	c[0] = exp(c[0]);
 	
-	for(i = 0; i < size; ++i){
-		quad_rest += c[i] * x_sums[i]; 
+	for(i = 0; i < psize; ++i){
+		s = points[i].y;
+		for(j = 0; j < size; ++j){
+			s -= c[j] * pow(points[i].x, j); 
+		}
+		quad_rest += s;
 	}
-	quad_rest = y_sums[0] - quad_rest;
 	quad_mean = quad_rest / x_sums[0];
 	
 	return c;
@@ -293,7 +289,7 @@ vector<double> squared_minimun_exponential(vector<Point> points, double &quad_me
 vector<double> squared_minimun_four(vector<Point> points, double &quad_mean){
 	int degree = 1;
 	int i, j, k, size = degree+1, psize = points.size();
-	double quad_rest = 0.0;
+	double quad_rest = 0.0, s = 0.0;
 	vector<double> x_sums(2*degree+1, 0.0), y_sums(degree+1, 0.0), c(degree+1);
 	dMatrix matrix(size, vector<double>(size + 1, 0.0));
 	
@@ -316,10 +312,13 @@ vector<double> squared_minimun_four(vector<Point> points, double &quad_mean){
 	c = gauss_elimination(matrix, size);	
 	c[0] = exp(c[0]);
 	
-	for(i = 0; i < size; ++i){
-		quad_rest += c[i] * x_sums[i]; 
+	for(i = 0; i < psize; ++i){
+		s = points[i].y;
+		for(j = 0; j < size; ++j){
+			s -= c[j] * pow(points[i].x, j); 
+		}
+		quad_rest += s;
 	}
-	quad_rest = y_sums[0] - quad_rest;
 	quad_mean = quad_rest / x_sums[0];
 	
 	return c;
