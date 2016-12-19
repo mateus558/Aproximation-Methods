@@ -11,14 +11,27 @@ struct Point{
 	double x, y;
 };
 
+double f(double x);
+double g(double x);
+double f1(double x);
+double g1(double x);
 double lagrange_interpol(vector<Point> points, double x);
 bool load_points(string fname, vector<Point> &points);
 dMatrix swap_lines(dMatrix A, int N, int L1, int L2);
 vector<double> gauss_elimination(dMatrix A, int N);
+vector<double> squared_minimun_generalized(vector<Point> points, int degree, double (*p[]) (double x),double &quad_mean);
 vector<double> squared_minimun_polynomial(vector<Point> points, int degree, double &quad_mean);
 vector<double> squared_minimun_exponential(vector<Point> points, double &quad_mean);
 vector<double> squared_minimun_four(vector<Point> points, double &quad_mean);
  
+double (*q[2]) (double x) = {
+	f, g
+}; 
+
+double (*p[2]) (double x) = {
+	f1, g1
+};
+
 int main(){
 	int i, d, o;
 	double x, quad_mean = 0.0;
@@ -62,6 +75,16 @@ int main(){
 			
 			c = squared_minimun_four(points, quad_mean);		
 			break;
+		case 4:
+			cout << "\nGeneralized Least Square Method 1\n" << endl;
+			
+			c = squared_minimun_generalized(points, 1, q, quad_mean);		
+			break;
+		case 5:
+			cout << "\nGeneralized Least Square Method 2\n" << endl;
+			
+			c = squared_minimun_generalized(points, 1, p, quad_mean);		
+			break;
 		default:
 			cout << "Unknown option, aborting..." << endl;
 			return 0;  
@@ -91,6 +114,22 @@ bool load_points(string fname, vector<Point> &points){
 	}
 	
 	return 1;	
+}
+
+double f(double x){
+	return exp(x);
+}
+
+double g(double x){
+	return exp(-x);
+}
+
+double f1(double x){
+	return 1/(1 + exp(-x));
+}
+
+double g1(double x){
+	return exp(-x * x);
 }
 
 double lagrange_interpol(vector<Point> points, double x){
@@ -320,6 +359,50 @@ vector<double> squared_minimun_four(vector<Point> points, double &quad_mean){
 		quad_rest += s;
 	}
 	quad_mean = quad_rest / x_sums[0];
+	
+	return c;
+}
+
+vector<double> squared_minimun_generalized(vector<Point> points, int degree, double (*p[]) (double x), double &quad_mean){
+	int i, j, k, size = degree+1, psize = points.size();
+	double quad_rest = 0.0, s = 0.0;
+	vector<double> dots(2*degree+1, 0.0), dot_y(degree+1, 0.0), c(degree+1);
+	dMatrix u(size, vector<double>(psize));
+	dMatrix matrix(size, vector<double>(size + 1, 0.0));
+	
+	for(i = 0; i < size; ++i){
+		for(j = 0; j < psize; ++j){
+			u[i][j] = (*p[i]) (points[j].x);
+		}
+	}
+	
+	for(i = 0; i < size; ++i){
+		for(j = i; j < size; ++j){
+			for(k = 0; k < psize; ++k)
+				dots[i + j] += u[i][k] * u[j][k];
+		}
+		for(k = 0; k < psize; ++k){
+			dot_y[i] += u[i][k] * points[k].y;
+		}
+	}
+
+	for(i = 0; i < size; ++i){
+		for(j = 0; j < size; ++j){
+			matrix[i][j] = dots[i + j];
+		}
+		matrix[i][j] = dot_y[i];
+	}
+	
+	c = gauss_elimination(matrix, size);
+	
+	for(i = 0; i < psize; ++i){
+		s = points[i].y;
+		for(j = 0; j < size; ++j){
+			s -= c[j] * pow(points[i].x, j); 
+		}
+		quad_rest += s;
+	}
+	quad_mean = quad_rest / dots[0];
 	
 	return c;
 }
