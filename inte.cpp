@@ -21,10 +21,10 @@ double lagrange_interpol(vector<Point> points, double x);
 bool load_points(string fname, vector<Point> &points);
 dMatrix swap_lines(dMatrix A, int N, int L1, int L2);
 vector<double> gauss_elimination(dMatrix A, int N);
-vector<double> squared_minimun_generalized(vector<Point> points, int degree, double (*p[]) (double x),double &quad_mean);
-vector<double> squared_minimun_polynomial(vector<Point> points, int degree, double &quad_mean);
-vector<double> squared_minimun_exponential(vector<Point> points, double &quad_mean);
-vector<double> squared_minimun_four(vector<Point> points, double &quad_mean);
+vector<double> LLSR_generalized(vector<Point> points, int degree, double (*p[]) (double x),double &quad_mean);
+vector<double> LLSR_polynomial(vector<Point> points, int degree, double &quad_mean);
+vector<double> nLLSR_exponential(vector<Point> points, double &quad_mean);
+vector<double> nLLSR_four(vector<Point> points, double &quad_mean);
  
 double (*q[2]) (double x) = {
 	f, g
@@ -73,29 +73,29 @@ int main(){
 			cin >> d;
 			cout << endl;
 			
-			c = squared_minimun_polynomial(points, d, quad_mean);
+			c = LLSR_polynomial(points, d, quad_mean);
 			break;
 		case 2:
 			cout << "\nLeast square method with exponential\n" << endl;
 			
-			c = squared_minimun_exponential(points, quad_mean);		
+			c = nLLSR_exponential(points, quad_mean);		
 			break;
 		case 3:
 			cout << "\nLeast square method with exponential\n" << endl;
 			
-			c = squared_minimun_four(points, quad_mean);		
+			c = nLLSR_four(points, quad_mean);		
 			break;
 		case 4:
 			cout << "\nGeneralized Least Square Method 1\n" << endl;
 			cout << "f(x) = e^x and g(x) = e^-x\n" << endl;
 			
-			c = squared_minimun_generalized(points, 1, q, quad_mean);		
+			c = LLSR_generalized(points, 1, q, quad_mean);		
 			break;
 		case 5:
 			cout << "\nGeneralized Least Square Method 2\n" << endl;
 			cout << "f(x) = 1/(1 + e^-x) and g(x) = e^-(x^2)\n" << endl;
 			
-			c = squared_minimun_generalized(points, 1, p, quad_mean);		
+			c = LLSR_generalized(points, 1, p, quad_mean);		
 			break;
 		default:
 			cout << "Unknown option, aborting..." << endl;
@@ -267,7 +267,7 @@ vector<double> gauss_elimination(dMatrix A, int N){
 	return x;
 }
 
-vector<double> squared_minimun_polynomial(vector<Point> points, int degree, double &quad_mean){
+vector<double> LLSR_polynomial(vector<Point> points, int degree, double &quad_mean){
 	int i, j, k, size = degree+1, psize = points.size();
 	double quad_rest = 0.0, s = 0.0;
 	vector<double> x_sums(2*degree+1, 0.0), y_sums(degree+1, 0.0), c(degree+1);
@@ -303,7 +303,7 @@ vector<double> squared_minimun_polynomial(vector<Point> points, int degree, doub
 	return c;
 }
 
-vector<double> squared_minimun_exponential(vector<Point> points, double &quad_mean){
+vector<double> nLLSR_exponential(vector<Point> points, double &quad_mean){
 	int degree = 1;
 	int i, j, k, size = degree+1, psize = points.size();
 	double quad_rest = 0.0, s = 0.0;
@@ -339,7 +339,7 @@ vector<double> squared_minimun_exponential(vector<Point> points, double &quad_me
 	return c;
 }
 
-vector<double> squared_minimun_four(vector<Point> points, double &quad_mean){
+vector<double> nLLSR_four(vector<Point> points, double &quad_mean){
 	int degree = 1;
 	int i, j, k, size = degree+1, psize = points.size();
 	double quad_rest = 0.0, s = 0.0;
@@ -375,7 +375,7 @@ vector<double> squared_minimun_four(vector<Point> points, double &quad_mean){
 	return c;
 }
 
-vector<double> squared_minimun_generalized(vector<Point> points, int degree, double (*p[]) (double x), double &quad_mean){
+vector<double> LLSR_generalized(vector<Point> points, int degree, double (*p[]) (double x), double &quad_mean){
 	int i, j, k, size = degree+1, psize = points.size();
 	double quad_rest = 0.0, s = 0.0;
 	vector<double> dots(2*degree+1, 0.0), dot_y(degree+1, 0.0), c(degree+1);
