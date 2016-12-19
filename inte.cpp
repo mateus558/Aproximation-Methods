@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <algorithm>
 #include <fstream>
 #include <cmath>
 
@@ -11,6 +12,7 @@ struct Point{
 	double x, y;
 };
 
+bool comp(Point a, Point b);
 double f(double x);
 double g(double x);
 double f1(double x);
@@ -39,12 +41,15 @@ int main(){
 	vector<Point> points;
 	
 	load_points("in", points);
+	
+	sort(points.begin(), points.end(), comp);
+	
 	cout << "Loaded points: ";
 	for(Point p: points)
 		cout << "(" << p.x << ", " << p.y << ") | ";
 	cout << endl;
 	
-	cout << "\n0 - Evaluate a point by lagrange interpolation; 1..6 - Least squares method functions" << endl;  
+	cout << "\n0 - Evaluate a point by lagrange interpolation; 1..5 - Least squares method functions" << endl;  
 	cout << "Select an option: ";
 	cin >> o;
 	
@@ -52,6 +57,11 @@ int main(){
 		case 0:
 			cout << "Point to evaluate: ";
 			cin >> x;
+			
+			if(x < points[0].x || x > points[points.size()-1].x){
+				cout << "Point out of interpolation range." << endl;
+				return 0;
+			}
 			
 			x = lagrange_interpol(points, x);
 			cout << "Value: " << x << endl;
@@ -77,11 +87,13 @@ int main(){
 			break;
 		case 4:
 			cout << "\nGeneralized Least Square Method 1\n" << endl;
+			cout << "f(x) = e^x and g(x) = e^-x\n" << endl;
 			
 			c = squared_minimun_generalized(points, 1, q, quad_mean);		
 			break;
 		case 5:
 			cout << "\nGeneralized Least Square Method 2\n" << endl;
+			cout << "f(x) = 1/(1 + e^-x) and g(x) = e^-(x^2)\n" << endl;
 			
 			c = squared_minimun_generalized(points, 1, p, quad_mean);		
 			break;
@@ -95,6 +107,10 @@ int main(){
 	for(i = 0; i < c.size(); ++i){
 		cout << "c[" << i << "]: " << c[i] << endl; 
 	}
+}
+
+bool comp(Point a, Point b){
+	return a.x < b.x;
 }
 
 bool load_points(string fname, vector<Point> &points){
@@ -277,12 +293,12 @@ vector<double> squared_minimun_polynomial(vector<Point> points, int degree, doub
 	
 	for(i = 0; i < psize; ++i){
 		s = points[i].y;
-		for(j = 0; j < size; ++j){
+		for(j = size - 1; j >= 0; --j){
 			s -= c[j] * pow(points[i].x, j); 
 		}
-		quad_rest += s;
+		quad_rest += s * s;
 	}
-	quad_mean = quad_rest / x_sums[0];
+	quad_mean = quad_rest / psize;
 	
 	return c;
 }
@@ -314,13 +330,11 @@ vector<double> squared_minimun_exponential(vector<Point> points, double &quad_me
 	c[0] = exp(c[0]);
 	
 	for(i = 0; i < psize; ++i){
-		s = points[i].y;
-		for(j = 0; j < size; ++j){
-			s -= c[j] * pow(points[i].x, j); 
-		}
-		quad_rest += s;
+		s = log(points[i].y);
+		s -= log(fabs(c[1])) + c[0] * points[i].x;
+		quad_rest += s * s;
 	}
-	quad_mean = quad_rest / x_sums[0];
+	quad_mean = quad_rest / psize;
 	
 	return c;
 }
@@ -349,16 +363,14 @@ vector<double> squared_minimun_four(vector<Point> points, double &quad_mean){
 	}
 	
 	c = gauss_elimination(matrix, size);	
-	c[0] = exp(c[0]);
 	
 	for(i = 0; i < psize; ++i){
-		s = points[i].y;
-		for(j = 0; j < size; ++j){
-			s -= c[j] * pow(points[i].x, j); 
-		}
-		quad_rest += s;
+		s = log(points[i].y);
+		s -= log(fabs(c[1])) + log(fabs(points[i].x)) + c[0] * points[i].x; 
+		quad_rest += s * s;
 	}
-	quad_mean = quad_rest / x_sums[0];
+	quad_mean = quad_rest / psize;
+	c[0] = exp(c[0]);
 	
 	return c;
 }
@@ -397,12 +409,12 @@ vector<double> squared_minimun_generalized(vector<Point> points, int degree, dou
 	
 	for(i = 0; i < psize; ++i){
 		s = points[i].y;
-		for(j = 0; j < size; ++j){
-			s -= c[j] * pow(points[i].x, j); 
+		for(j = size - 1; j >= 0; --j){
+			s -= c[j] * u[j][i]; 
 		}
-		quad_rest += s;
+		quad_rest += s * s;
 	}
-	quad_mean = quad_rest / dots[0];
-	
+	quad_mean = quad_rest / psize;
+
 	return c;
 }
